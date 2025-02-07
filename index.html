@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Magic Background Remover</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* Base Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: #f0f2f5;
+            color: #333;
+        }
+
+        /* Header Styles */
+        header {
+            background: #ffffff;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 1rem 2rem;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .nav-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #2d3436;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .logo i {
+            color: #6c5ce7;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: #2d3436;
+            font-weight: 500;
+            position: relative;
+            transition: color 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            color: #6c5ce7;
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: #6c5ce7;
+            transition: width 0.3s ease;
+        }
+
+        .nav-links a:hover::after {
+            width: 100%;
+        }
+
+        /* Main Content */
+        main {
+            margin-top: 100px;
+            padding: 2rem;
+            min-height: calc(100vh - 160px);
+        }
+
+        /* Upload Section */
+        .upload-section {
+            max-width: 600px;
+            margin: 2rem auto;
+            text-align: center;
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .upload-section:hover {
+            transform: translateY(-5px);
+        }
+
+        .upload-label {
+            border: 2px dashed #6c5ce7;
+            padding: 2rem;
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            color: #6c5ce7;
+            transition: all 0.3s ease;
+        }
+
+        .upload-label.dragover {
+            background: #f0f2f5;
+            border-color: #00b894;
+        }
+
+        .upload-label i {
+            font-size: 2.5rem;
+        }
+
+        #imageUpload {
+            display: none;
+        }
+
+        /* Preview Section */
+        .preview-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin: 3rem auto;
+            max-width: 1200px;
+        }
+
+        .preview-box {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            opacity: 0;
+            transform: translateY(20px);
+            animation: slideUp 0.5s ease forwards;
+        }
+
+        @keyframes slideUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .preview-img {
+            width: 100%;
+            height: 400px;
+            object-fit: contain;
+            border-radius: 10px;
+            display: none;
+        }
+
+        /* Buttons */
+	
+	        /* ... (previous CSS remains same) ... */
+
+        /* Updated Button Styles with Gaps */
+        .btn-primary {
+            background: #6c5ce7;
+            color: white;
+            margin-top: 15px; /* Added gap above button */
+            margin-bottom: 10px; /* Added gap below button */
+        }
+
+        .btn-secondary {
+            background: #00b894;
+            color: white;
+            margin-top: 20px; /* Larger gap for download button */
+        }
+
+        /* Specific gap for process button */
+        #processButton {
+            margin-top: 20px;
+            margin-bottom: 15px;
+        }
+
+        /* Gap between upload section and preview */
+        .preview-section {
+            margin-top: 40px; /* Increased from 3rem */
+        }
+
+
+        .btn {
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: #6c5ce7;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5b4bc4;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #00b894;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #00a383;
+        }
+
+        /* Loading Animation */
+        .loader {
+            display: none;
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #6c5ce7;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 1rem auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Footer */
+        footer {
+            background: #2d3436;
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .social-links {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            margin: 1rem 0;
+        }
+
+        .social-links a {
+            color: white;
+            font-size: 1.5rem;
+            transition: color 0.3s ease;
+        }
+
+        .social-links a:hover {
+            color: #6c5ce7;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .preview-section {
+                grid-template-columns: 1fr;
+            }
+            
+            .nav-links {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="nav-container">
+            <a href="#" class="logo">
+                <i class="fas fa-magic"></i>
+                BG Magic
+            </a>
+            <div class="nav-links">
+                <a href="#"><i class="fas fa-home"></i> Home</a>
+                <a href="#"><i class="fas fa-cogs"></i> Features</a>
+                <a href="#"><i class="fas fa-info-circle"></i> About</a>
+                <a href="#"><i class="fas fa-envelope"></i> Contact</a>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <div class="upload-section">
+            <label class="upload-label" id="uploadLabel" for="imageUpload">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <span>Drag & Drop or Click to Upload Image</span>
+                <input type="file" id="imageUpload" accept="image/*">
+            </label>
+            <button class="btn btn-primary" id="processButton">
+                <i class="fas fa-wand-magic-sparkles"></i>
+                Remove Background
+            </button>
+            <div class="loader" id="loader"></div>
+        </div>
+
+        <div class="preview-section">
+            <div class="preview-box">
+                <h3><i class="fas fa-image"></i> Original Image</h3>
+                <img class="preview-img" id="beforeImage" src="#" alt="Original">
+            </div>
+            <div class="preview-box">
+                <h3><i class="fas fa-check-circle"></i> Result</h3>
+                <img class="preview-img" id="afterImage" src="#" alt="Processed">
+                <button class="btn btn-secondary" id="downloadButton" disabled>
+                    <i class="fas fa-download"></i>
+                    Download
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="social-links">
+            <a href="#"><i class="fab fa-github"></i></a>
+            <a href="#"><i class="fab fa-twitter"></i></a>
+            <a href="#"><i class="fab fa-instagram"></i></a>
+            <a href="#"><i class="fab fa-facebook"></i></a>
+        </div>
+        <p>&copy; 2023 BG Magic. All rights reserved.</p>
+    </footer>
+
+    <script>
+        const imageUpload = document.getElementById('imageUpload');
+        const uploadLabel = document.getElementById('uploadLabel');
+        const processButton = document.getElementById('processButton');
+        const beforeImage = document.getElementById('beforeImage');
+        const afterImage = document.getElementById('afterImage');
+        const downloadButton = document.getElementById('downloadButton');
+        const loader = document.getElementById('loader');
+
+        let processedImageUrl = null;
+
+        // Drag and Drop Functionality
+        uploadLabel.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadLabel.classList.add('dragover');
+        });
+
+        uploadLabel.addEventListener('dragleave', () => {
+            uploadLabel.classList.remove('dragover');
+        });
+
+        uploadLabel.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadLabel.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) {
+                imageUpload.files = e.dataTransfer.files;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    beforeImage.src = e.target.result;
+                    beforeImage.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            } else {
+                alert('Please upload a valid image file.');
+            }
+        });
+
+        // File Upload Handler
+        imageUpload.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    beforeImage.src = e.target.result;
+                    beforeImage.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Process Image using Remove.bg API
+        processButton.addEventListener('click', async () => {
+            const file = imageUpload.files[0];
+            if (!file) {
+                alert('Please upload an image first!');
+                return;
+            }
+
+            loader.style.display = 'block';
+            processButton.disabled = true;
+
+            const formData = new FormData();
+            formData.append('image_file', file);
+
+            try {
+                const response = await fetch('https://api.remove.bg/v1.0/removebg', {
+                    method: 'POST',
+                    headers: {
+                        'X-Api-Key': 'RjTfmhtathvhTpETzR1191t9',
+                    },
+                    body: formData,
+                });
+
+                if (!response.ok) throw new Error('Processing failed');
+
+                const result = await response.blob();
+                processedImageUrl = URL.createObjectURL(result);
+                afterImage.src = processedImageUrl;
+                afterImage.style.display = 'block';
+                downloadButton.disabled = false;
+
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error processing image. Please try again.');
+            } finally {
+                loader.style.display = 'none';
+                processButton.disabled = false;
+            }
+        });
+
+        // Download Image
+        downloadButton.addEventListener('click', () => {
+            if (processedImageUrl) {
+                const link = document.createElement('a');
+                link.href = processedImageUrl;
+                link.download = 'background-removed.png';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        });
+    </script>
+</body>
+</html>
